@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./App.css";
+import Voice from "./Voice";
 
 const API = "http://localhost:8000";
 
@@ -14,6 +15,7 @@ function App() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [agentMode, setAgentMode] = useState(false);
 
   // Adds one message to the chat
   function addMessage(msg) {
@@ -29,14 +31,14 @@ function App() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API}/ask`, {
+      const res = await fetch(`${API}/${agentMode ? "agent" : "ask"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: myQuestion }),
       });
       if (!res.ok) throw new Error("Server error");
       const data = await res.json();
-      addMessage({ role: "bot", text: data.answer, sources: data.sources });
+      addMessage({ role: "bot", text: data.answer, sources: data.sources, steps: data.steps });
     } catch {
       addMessage({ role: "bot", text: "Oops! Is the backend running?" });
     }
@@ -47,6 +49,17 @@ function App() {
   return (
     <div className="app">
       <h1>📚 Ask My Notes</h1>
+      <div className="top">
+        <label className="mode">
+          <input
+            type="checkbox"
+            checked={agentMode}
+            onChange={(e) => setAgentMode(e.target.checked)}
+          />
+          🤖 Agent mode
+        </label>
+        <Voice />
+      </div>
       <div className="chat">
         {messages.length === 0 && (
           <p className="hint">Ask anything about your notes 👇</p>
@@ -55,6 +68,7 @@ function App() {
           <div key={i} className={`msg ${m.role}`}>
             <p>{m.text}</p>
             {m.sources && <small>📄 {showSources(m.sources)}</small>}
+            {m.steps?.length > 0 && <small>🛠 {m.steps.join(" → ")}</small>}
           </div>
         ))}
         {loading && <div className="msg bot">Thinking... 🤔</div>}

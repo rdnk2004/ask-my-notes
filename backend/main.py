@@ -47,3 +47,18 @@ If the answer is not in the notes, say "Not found in your notes."
     )
     answer = reply.choices[0].message.content
     return {"answer": answer, "sources": sources}
+
+
+# ---------- DAY 3: the agent door ----------
+from agent_langchain import ask_agent
+
+@app.post("/agent")
+def agent(q: Question):
+    answer, steps = ask_agent(q.question)
+    return {"answer": answer, "steps": steps}
+
+
+# ---------- DAY 3: the live voice door ----------
+from voice import router as voice_router
+
+app.include_router(voice_router)
